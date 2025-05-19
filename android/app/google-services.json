@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "72623827903",
+    "project_id": "moody-c9329",
+    "storage_bucket": "moody-c9329.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:72623827903:android:8daf39f5f1011b09300f0a",
+        "android_client_info": {
+          "package_name": "com.example.moody"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDRyLUm8Vmgne4UBFjlAe4FwGI5VuOPS8A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
