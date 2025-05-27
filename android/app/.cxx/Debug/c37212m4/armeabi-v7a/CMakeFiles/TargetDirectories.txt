@@ -1,0 +1,2 @@
+C:/Users/82103/Desktop/gitgitgit/moody/android/app/.cxx/Debug/c37212m4/armeabi-v7a/CMakeFiles/edit_cache.dir
+C:/Users/82103/Desktop/gitgitgit/moody/android/app/.cxx/Debug/c37212m4/armeabi-v7a/CMakeFiles/rebuild_cache.dir
