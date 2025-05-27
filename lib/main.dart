@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:moody/firebase_options.dart';
 import 'package:moody/ui/home_page/home_page.dart';
 import 'package:moody/ui/modify_page/modify_page.dart';
-import 'package:moody/ui/modify_page/test.dart'; // 파이어베이스 테스트용
+import 'package:moody/ui/modify_page/test.dart'; // 파이어베이스 테스트용 //
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
