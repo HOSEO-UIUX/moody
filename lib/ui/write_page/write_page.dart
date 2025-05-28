@@ -1,19 +1,12 @@
 import 'package:flutter/material.dart';
 
-void main() => runApp(
-    const MaterialApp(
-      home: (WritePage()),
-      debugShowCheckedModeBanner: false,
-    )
-);
-
 class WritePage extends StatelessWidget {
   const WritePage({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: AppBar( //상단 app bar 마이로그 글자 및 gpt 생성 버튼
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
@@ -53,7 +46,7 @@ class WritePage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
-            SizedBox(
+            SizedBox( //작성하기 버튼
               width: double.infinity,
               height: 40,
               child: ElevatedButton(
