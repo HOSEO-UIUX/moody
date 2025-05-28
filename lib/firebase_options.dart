@@ -17,10 +17,7 @@ import 'package:flutter/foundation.dart'
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
-      throw UnsupportedError(
-        'DefaultFirebaseOptions have not been configured for web - '
-        'you can reconfigure this by running the FlutterFire CLI again.',
-      );
+      return web;
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
@@ -33,10 +30,7 @@ class DefaultFirebaseOptions {
           'you can reconfigure this by running the FlutterFire CLI again.',
         );
       case TargetPlatform.windows:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for windows - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return windows;
       case TargetPlatform.linux:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for linux - '
@@ -54,6 +48,7 @@ class DefaultFirebaseOptions {
     appId: '1:72623827903:android:8daf39f5f1011b09300f0a',
     messagingSenderId: '72623827903',
     projectId: 'moody-c9329',
+    databaseURL: 'https://moody-c9329-default-rtdb.firebaseio.com',
     storageBucket: 'moody-c9329.firebasestorage.app',
   );
 
@@ -62,7 +57,31 @@ class DefaultFirebaseOptions {
     appId: '1:72623827903:ios:c5208c7d8988e060300f0a',
     messagingSenderId: '72623827903',
     projectId: 'moody-c9329',
+    databaseURL: 'https://moody-c9329-default-rtdb.firebaseio.com',
     storageBucket: 'moody-c9329.firebasestorage.app',
     iosBundleId: 'com.example.moody',
   );
+
+  static const FirebaseOptions web = FirebaseOptions(
+    apiKey: 'AIzaSyCtQZeqxxXFOf5c5flyHGBTFWCj21qbSFs',
+    appId: '1:72623827903:web:e5775df0d44d9056300f0a',
+    messagingSenderId: '72623827903',
+    projectId: 'moody-c9329',
+    authDomain: 'moody-c9329.firebaseapp.com',
+    databaseURL: 'https://moody-c9329-default-rtdb.firebaseio.com',
+    storageBucket: 'moody-c9329.firebasestorage.app',
+    measurementId: 'G-ZBYDVNG5VX',
+  );
+
+  static const FirebaseOptions windows = FirebaseOptions(
+    apiKey: 'AIzaSyCtQZeqxxXFOf5c5flyHGBTFWCj21qbSFs',
+    appId: '1:72623827903:web:d94470291ba52db6300f0a',
+    messagingSenderId: '72623827903',
+    projectId: 'moody-c9329',
+    authDomain: 'moody-c9329.firebaseapp.com',
+    databaseURL: 'https://moody-c9329-default-rtdb.firebaseio.com',
+    storageBucket: 'moody-c9329.firebasestorage.app',
+    measurementId: 'G-9T4DNBENMZ',
+  );
+
 }
