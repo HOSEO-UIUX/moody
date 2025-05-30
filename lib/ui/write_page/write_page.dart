@@ -1,12 +1,5 @@
 import 'package:flutter/material.dart';
 
-void main() => runApp(
-    const MaterialApp(
-      home: (WritePage()),
-      debugShowCheckedModeBanner: false,
-    )
-);
-
 class WritePage extends StatelessWidget {
   const WritePage({super.key});
 
