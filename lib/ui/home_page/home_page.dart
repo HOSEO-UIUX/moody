@@ -1,9 +1,9 @@
+// lib/ui/home_page.dart
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:moody/ui/write_page/write_page.dart';
-
-
+import 'package:moody/ui/modify_page/modify_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -16,51 +16,59 @@ class _HomePageState extends State<HomePage> {
   late DateTime _selectedMonth;
   late int _yearPickerInitialIndex;
   late int _monthPickerInitialIndex;
-  String testData = '로딩 중...';
 
+  // Firestore 에서 받아온 일기 문서 리스트
+  List<QueryDocumentSnapshot> _diaryDocs = [];
+  bool _isLoading = true;
+
+  // 연도 선택 리스트 (2025~2050)
   final List<int> _yearList = List.generate(
     2050 - 2025 + 1,
-        (index) => 2025 + index,
+        (i) => 2025 + i,
   );
 
   @override
   void initState() {
     super.initState();
-    _loadData();
     final now = DateTime.now();
     _selectedMonth = DateTime(now.year, now.month);
-    _yearPickerInitialIndex = _yearList.indexOf(_selectedMonth.year);
-    if (_yearPickerInitialIndex == -1) {
-      _yearPickerInitialIndex = 0;
-      _selectedMonth = DateTime(_yearList.first, now.month);
-    }
+    _yearPickerInitialIndex = _yearList
+        .indexOf(_selectedMonth.year)
+        .clamp(0, _yearList.length - 1);
     _monthPickerInitialIndex = _selectedMonth.month - 1;
+
+    // Firestore 로 데이터 로드
+    _loadData();
   }
 
+  /// 선택된 연·월의 일기를 Firestore 에서 가져오는 메서드
   Future<void> _loadData() async {
+    setState(() {
+      _isLoading = true;
+    });
     try {
-      final querySnapshot =
-      await FirebaseFirestore.instance.collection('test').get();
-      if (querySnapshot.docs.isNotEmpty) {
-        final doc = querySnapshot.docs.first;
-        setState(() {
-          testData = doc.get('test') ?? '데이터 없음';
-        });
-      } else {
-        setState(() {
-          testData = '문서가 존재하지 않습니다';
-        });
-      }
+      final query = await FirebaseFirestore.instance
+          .collection('diaries')
+          .where('year', isEqualTo: _selectedMonth.year)
+          .where('month', isEqualTo: _selectedMonth.month)
+          .orderBy('day')
+          .get();
+      setState(() {
+        _diaryDocs = query.docs;
+        _isLoading = false;
+      });
     } catch (e) {
       setState(() {
-        testData = '에러 발생: $e';
+        _diaryDocs = [];
+        _isLoading = false;
       });
     }
   }
 
+  /// 연·월 선택 피커
   void _showMonthPicker() {
-    int tempYearIndex = _yearPickerInitialIndex;
-    int tempMonthIndex = _monthPickerInitialIndex;
+    int tempYear = _yearPickerInitialIndex;
+    int tempMonth = _monthPickerInitialIndex;
     showCupertinoModalPopup(
       context: context,
       builder: (_) => Container(
@@ -84,13 +92,14 @@ class _HomePageState extends State<HomePage> {
                     onPressed: () {
                       setState(() {
                         _selectedMonth = DateTime(
-                          _yearList[tempYearIndex],
-                          tempMonthIndex + 1,
+                          _yearList[tempYear],
+                          tempMonth + 1,
                         );
-                        _yearPickerInitialIndex = tempYearIndex;
-                        _monthPickerInitialIndex = tempMonthIndex;
+                        _yearPickerInitialIndex = tempYear;
+                        _monthPickerInitialIndex = tempMonth;
                       });
                       Navigator.of(context).pop();
+                      _loadData(); // 월 변경 시 재로드
                     },
                   ),
                 ],
@@ -102,30 +111,29 @@ class _HomePageState extends State<HomePage> {
                   Expanded(
                     child: CupertinoPicker(
                       scrollController: FixedExtentScrollController(
-                        initialItem: _yearPickerInitialIndex,
+                        initialItem: tempYear,
                       ),
                       itemExtent: 32,
-                      onSelectedItemChanged: (i) {
-                        tempYearIndex = i;
-                      },
+                      onSelectedItemChanged: (i) => tempYear = i,
                       children: _yearList
-                          .map((y) => Center(child: Text('$y')))
+                          .map((y) => Center(child: Text('$y', style: TextStyle(fontSize: 16))))
                           .toList(),
                     ),
                   ),
                   Expanded(
                     child: CupertinoPicker(
                       scrollController: FixedExtentScrollController(
-                        initialItem: _monthPickerInitialIndex,
+                        initialItem: tempMonth,
                       ),
                       itemExtent: 32,
-                      onSelectedItemChanged: (i) {
-                        tempMonthIndex = i;
-                      },
+                      onSelectedItemChanged: (i) => tempMonth = i,
                       children: List.generate(
                         12,
                             (i) => Center(
-                          child: Text('${(i + 1).toString().padLeft(2, '0')}'),
+                          child: Text(
+                            '${(i + 1).toString().padLeft(2, '0')}',
+                            style: TextStyle(fontSize: 16),
+                          ),
                         ),
                       ),
                     ),
@@ -154,7 +162,11 @@ class _HomePageState extends State<HomePage> {
             children: [
               Text(
                 '${_selectedMonth.year}. ${_selectedMonth.month.toString().padLeft(2, '0')}',
-                style: const TextStyle(fontWeight: FontWeight.w600),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black, // 날짜 텍스트 색상을 검은색으로 고정
+                ),
               ),
               const SizedBox(width: 4),
               const Icon(CupertinoIcons.chevron_down, size: 20),
@@ -166,20 +178,111 @@ class _HomePageState extends State<HomePage> {
         child: Column(
           children: [
             Expanded(
-              child: Center(
-                child: Text(testData),
+              child: _isLoading
+                  ? const Center(child: CupertinoActivityIndicator())
+                  : _diaryDocs.isEmpty
+                  ? const Center(
+                child: Text(
+                  '작성된 일기가 없습니다',
+                  style: TextStyle(fontSize: 16),
+                ),
+              )
+                  : ListView.builder(
+                padding: EdgeInsets.zero,
+                itemCount: _diaryDocs.length,
+                itemBuilder: (_, idx) {
+                  final doc = _diaryDocs[idx];
+                  final ts = doc.get('date') as Timestamp;
+                  final date = ts.toDate();
+                  const wd = ['일', '월', '화', '수', '목', '금', '토'];
+                  final w = wd[date.weekday % 7];
+                  final tags = List<String>.from(doc.get('tags') ?? []);
+                  final content = doc.get('content') as String? ?? '';
+
+                  return GestureDetector(
+                    onTap: () {
+                      Navigator.of(context).push(
+                        CupertinoPageRoute(
+                          builder: (_) => ModifyPage(doc: doc),
+                        ),
+                      );
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${date.year}.${date.month.toString().padLeft(2, '0')}.${date.day.toString().padLeft(2, '0')}($w)',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black, // 날짜 텍스트 색상을 검은색으로 고정
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 4,
+                            children: tags
+                                .map((t) => Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                    color: Colors.brown, width: 1),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text('#$t',
+                                  style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.brown)),
+                            ))
+                                .toList(),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            content,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              height: 1.4,
+                              color: Colors.black, // 요약 텍스트 색상을 검은색으로 고정
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 8),
+                          const Divider(height: 1, thickness: 1),
+                        ],
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: CupertinoButton.filled(
-                onPressed: () async {
+            Container(
+              width: double.infinity,
+              padding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: SizedBox(
+                height: 56,
+                child: CupertinoButton(
+                  color: const Color(0xFF603913),
+                  borderRadius: BorderRadius.circular(8),
+                  onPressed: () async =>
                   await Navigator.of(context).push(
-                    CupertinoPageRoute(builder: (_) => WritePage()),
-                  );
-                  _loadData();
-                },
-                child: const Text('일기쓰기'),
+                    CupertinoPageRoute(
+                        builder: (_) => WritePage()),
+                  ),
+                  child: const Text(
+                    '일기쓰기',
+                    style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: CupertinoColors.white),
+                  ),
+                ),
               ),
             ),
           ],
