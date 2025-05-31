@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:moody/ui/write_page/write_page.dart';
 import 'package:moody/ui/modify_page/modify_page.dart';
+import 'package:google_fonts/google_fonts.dart'; // 구글 폰트 라이브러리 import
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -51,7 +52,7 @@ class _HomePageState extends State<HomePage> {
           .collection('diaries')
           .where('year', isEqualTo: _selectedMonth.year)
           .where('month', isEqualTo: _selectedMonth.month)
-          .orderBy('day')
+          .orderBy('day', descending: true) //최신순 내림차순으로 정렬
           .get();
       setState(() {
         _diaryDocs = query.docs;
@@ -166,6 +167,7 @@ class _HomePageState extends State<HomePage> {
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
                   color: Colors.black, // 날짜 텍스트 색상을 검은색으로 고정
+                  fontFamily: 'Pretendard', // Pretendard 폰트 적용
                 ),
               ),
               const SizedBox(width: 4),
@@ -184,7 +186,10 @@ class _HomePageState extends State<HomePage> {
                   ? const Center(
                 child: Text(
                   '작성된 일기가 없습니다',
-                  style: TextStyle(fontSize: 16),
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontFamily: 'Pretendard', // Pretendard 폰트 적용
+                  ),
                 ),
               )
                   : ListView.builder(
@@ -208,17 +213,17 @@ class _HomePageState extends State<HomePage> {
                       );
                     },
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 12),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             '${date.year}.${date.month.toString().padLeft(2, '0')}.${date.day.toString().padLeft(2, '0')}($w)',
-                            style: const TextStyle(
+                            style: GoogleFonts.getFont(
+                              'Ownglyph PDH', // Ownglyph PDH 폰트 적용
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
-                              color: Colors.black, // 날짜 텍스트 색상을 검은색으로 고정
+                              color: Colors.black,
                             ),
                           ),
                           const SizedBox(height: 6),
@@ -226,28 +231,33 @@ class _HomePageState extends State<HomePage> {
                             spacing: 8,
                             runSpacing: 4,
                             children: tags
-                                .map((t) => Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                border: Border.all(
-                                    color: Colors.brown, width: 1),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Text('#$t',
+                                .map(
+                                  (t) => Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.brown, width: 1),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  '#$t',
                                   style: const TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.brown)),
-                            ))
+                                    fontSize: 12,
+                                    color: Colors.brown,
+                                    fontFamily: 'Pretendard', // Pretendard 폰트 적용
+                                  ),
+                                ),
+                              ),
+                            )
                                 .toList(),
                           ),
                           const SizedBox(height: 6),
                           Text(
                             content,
-                            style: const TextStyle(
+                            style: GoogleFonts.getFont(
+                              'Ownglyph PDH', // Ownglyph PDH 폰트 적용
                               fontSize: 14,
                               height: 1.4,
-                              color: Colors.black, // 요약 텍스트 색상을 검은색으로 고정
+                              color: Colors.black,
                             ),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
@@ -263,24 +273,23 @@ class _HomePageState extends State<HomePage> {
             ),
             Container(
               width: double.infinity,
-              padding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: SizedBox(
                 height: 56,
                 child: CupertinoButton(
                   color: const Color(0xFF603913),
                   borderRadius: BorderRadius.circular(8),
-                  onPressed: () async =>
-                  await Navigator.of(context).push(
-                    CupertinoPageRoute(
-                        builder: (_) => WritePage()),
+                  onPressed: () async => await Navigator.of(context).push(
+                    CupertinoPageRoute(builder: (_) => WritePage()),
                   ),
-                  child: const Text(
+                  child: Text(
                     '일기쓰기',
-                    style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: CupertinoColors.white),
+                    style: GoogleFonts.getFont(
+                      'Heading 5 R', // Heading 5 R 폰트 적용
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: CupertinoColors.white,
+                    ),
                   ),
                 ),
               ),
