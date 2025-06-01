@@ -1,10 +1,11 @@
 // lib/ui/home_page.dart
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:moody/ui/write_page/write_page.dart';
 import 'package:moody/ui/modify_page/modify_page.dart';
-import 'package:google_fonts/google_fonts.dart'; // 구글 폰트 라이브러리 import
+import 'package:google_fonts/google_fonts.dart'; // Google Fonts 패키지 import
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -32,44 +33,60 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     final now = DateTime.now();
+    // 현재 연·월로 초기화
     _selectedMonth = DateTime(now.year, now.month);
-    _yearPickerInitialIndex = _yearList
-        .indexOf(_selectedMonth.year)
-        .clamp(0, _yearList.length - 1);
+    _yearPickerInitialIndex =
+        _yearList.indexOf(_selectedMonth.year).clamp(0, _yearList.length - 1);
     _monthPickerInitialIndex = _selectedMonth.month - 1;
 
-    // Firestore 로 데이터 로드
+    // 초기 데이터 로드
     _loadData();
   }
 
-  /// 선택된 연·월의 일기를 Firestore 에서 가져오는 메서드
+  /// ================================================
+  /// Firestore의 중첩된 컬렉션 구조를 타고
+  /// 해당 연·월의 문서들을 가져오는 메서드
+  /// ================================================
   Future<void> _loadData() async {
     setState(() {
-      _isLoading = true;
+      _isLoading = true; // 로딩 인디케이터 표시
     });
+
     try {
-      final query = await FirebaseFirestore.instance
-          .collection('diaries')
-          .where('year', isEqualTo: _selectedMonth.year)
-          .where('month', isEqualTo: _selectedMonth.month)
-          .orderBy('day', descending: true) //최신순 내림차순으로 정렬
+      // 연·월을 두 자리 문자열로 변환 (ex: "2025", "05")
+      final String yearStr = _selectedMonth.year.toString();
+      final String monthStr = _selectedMonth.month.toString().padLeft(2, '0');
+
+      // 중첩된 경로를 타고 들어가서 해당 월의 문서 전체 가져오기
+      final QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+          .collection('date')       // (1) 최상위 컬렉션: date
+          .doc('year')              // (2) 년도 구분 문서 ID: year
+          .collection(yearStr)      // (3) 연도별 컬렉션: ex) "2025"
+          .doc('month')             // (4) 월 구분 문서 ID: month
+          .collection(monthStr)     // (5) 월별 컬렉션: ex) "05"
+          .orderBy('day', descending: true) // day 필드 기준 내림차순 정렬
           .get();
+
+      // 가져온 문서 리스트를 상태에 저장하고 로딩 해제
       setState(() {
-        _diaryDocs = query.docs;
+        _diaryDocs = querySnapshot.docs;
         _isLoading = false;
       });
     } catch (e) {
+      // 에러 발생 시 빈 리스트로 만들고 로딩 해제
       setState(() {
         _diaryDocs = [];
         _isLoading = false;
       });
+      debugPrint('→ _loadData() 중 에러 발생: $e');
     }
   }
 
-  /// 연·월 선택 피커
+  /// 연·월 선택용 CupertinoPicker 팝업
   void _showMonthPicker() {
     int tempYear = _yearPickerInitialIndex;
     int tempMonth = _monthPickerInitialIndex;
+
     showCupertinoModalPopup(
       context: context,
       builder: (_) => Container(
@@ -77,6 +94,7 @@ class _HomePageState extends State<HomePage> {
         color: CupertinoColors.systemBackground.resolveFrom(context),
         child: Column(
           children: [
+            // 상단에 취소/완료 버튼
             SizedBox(
               height: 44,
               child: Row(
@@ -91,6 +109,7 @@ class _HomePageState extends State<HomePage> {
                     padding: EdgeInsets.zero,
                     child: const Text('완료'),
                     onPressed: () {
+                      // 선택된 연·월을 _selectedMonth로 반영
                       setState(() {
                         _selectedMonth = DateTime(
                           _yearList[tempYear],
@@ -100,32 +119,36 @@ class _HomePageState extends State<HomePage> {
                         _monthPickerInitialIndex = tempMonth;
                       });
                       Navigator.of(context).pop();
-                      _loadData(); // 월 변경 시 재로드
+                      _loadData(); // 월 변경하면 데이터 재로드
                     },
                   ),
                 ],
               ),
             ),
+
+            // 하단에 두 개의 피커(연도, 월)
             Expanded(
               child: Row(
                 children: [
+                  // 연도 피커
                   Expanded(
                     child: CupertinoPicker(
-                      scrollController: FixedExtentScrollController(
-                        initialItem: tempYear,
-                      ),
+                      scrollController:
+                      FixedExtentScrollController(initialItem: tempYear),
                       itemExtent: 32,
                       onSelectedItemChanged: (i) => tempYear = i,
                       children: _yearList
-                          .map((y) => Center(child: Text('$y', style: TextStyle(fontSize: 16))))
+                          .map((y) => Center(
+                          child:
+                          Text('$y', style: const TextStyle(fontSize: 16))))
                           .toList(),
                     ),
                   ),
+                  // 월 피커
                   Expanded(
                     child: CupertinoPicker(
-                      scrollController: FixedExtentScrollController(
-                        initialItem: tempMonth,
-                      ),
+                      scrollController:
+                      FixedExtentScrollController(initialItem: tempMonth),
                       itemExtent: 32,
                       onSelectedItemChanged: (i) => tempMonth = i,
                       children: List.generate(
@@ -133,7 +156,7 @@ class _HomePageState extends State<HomePage> {
                             (i) => Center(
                           child: Text(
                             '${(i + 1).toString().padLeft(2, '0')}',
-                            style: TextStyle(fontSize: 16),
+                            style: const TextStyle(fontSize: 16),
                           ),
                         ),
                       ),
@@ -161,13 +184,14 @@ class _HomePageState extends State<HomePage> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
+              // 상단에 “YYYY. MM” 형태로 표시 (Pretendard 폰트 적용)
               Text(
                 '${_selectedMonth.year}. ${_selectedMonth.month.toString().padLeft(2, '0')}',
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
-                  color: Colors.black, // 날짜 텍스트 색상을 검은색으로 고정
-                  fontFamily: 'Pretendard', // Pretendard 폰트 적용
+                  color: Colors.black,
+                  fontFamily: 'Pretendard',
                 ),
               ),
               const SizedBox(width: 4),
@@ -181,69 +205,115 @@ class _HomePageState extends State<HomePage> {
           children: [
             Expanded(
               child: _isLoading
+              // 1) 로딩 중이면 인디케이터 표시
                   ? const Center(child: CupertinoActivityIndicator())
+              // 2) 로딩 완료 후 문서가 없으면 안내문 표시
                   : _diaryDocs.isEmpty
                   ? const Center(
                 child: Text(
                   '작성된 일기가 없습니다',
                   style: TextStyle(
                     fontSize: 16,
-                    fontFamily: 'Pretendard', // Pretendard 폰트 적용
+                    fontFamily: 'Pretendard',
                   ),
                 ),
               )
+              // 3) 문서가 있으면 ListView.builder 로 나열
                   : ListView.builder(
                 padding: EdgeInsets.zero,
                 itemCount: _diaryDocs.length,
                 itemBuilder: (_, idx) {
                   final doc = _diaryDocs[idx];
-                  final ts = doc.get('date') as Timestamp;
-                  final date = ts.toDate();
+
+                  // (A) 문서 ID("01","02",...)를 정수로 변환 → dayNumber
+                  final int dayNumber = int.parse(doc.id);
+                  // (B) 선택된 연·월 + dayNumber로 DateTime 생성
+                  final DateTime date = DateTime(
+                    _selectedMonth.year,
+                    _selectedMonth.month,
+                    dayNumber,
+                  );
                   const wd = ['일', '월', '화', '수', '목', '금', '토'];
-                  final w = wd[date.weekday % 7];
-                  final tags = List<String>.from(doc.get('tags') ?? []);
-                  final content = doc.get('content') as String? ?? '';
+                  final String w = wd[date.weekday % 7];
+
+                  // (C) doc.data()로 Map<String,dynamic> 가져오기
+                  final data = doc.data() as Map<String, dynamic>;
+
+                  // (D) tags 필드가 있으면 List<String>으로, 없으면 빈 리스트
+                  final List<String> tags = data.containsKey('tags')
+                      ? List<String>.from(data['tags'])
+                      : <String>[];
+
+                  // (E) content 필드가 있으면 가져오고, 없으면 빈 문자열
+                  final String content =
+                  data.containsKey('content') ? data['content'] as String : '';
 
                   return GestureDetector(
                     onTap: () {
-                      Navigator.of(context).push(
+                      // 수정 페이지로 이동할 때, 연도/월/일을 넘겨 줌
+                      final String yearStr =
+                      _selectedMonth.year.toString();
+                      final String monthStr = _selectedMonth.month
+                          .toString()
+                          .padLeft(2, '0');
+                      final String dayId = doc.id;
+
+                      Navigator.of(context)
+                          .push(
                         CupertinoPageRoute(
-                          builder: (_) => ModifyPage(doc: doc),
+                          builder: (_) => ModifyPage(
+                            year: yearStr,
+                            monthName: monthStr,
+                            dayId: dayId,
+                          ),
                         ),
-                      );
+                      )
+                          .then((result) {
+                        if (result == true) {
+                          // 수정 후 돌아오면 데이터 새로고침
+                          _loadData();
+                        }
+                      });
                     },
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 12),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          // (1) 날짜 표시 (ex: 2025.05.01(금)), Google Fonts 'Roboto' 적용
                           Text(
                             '${date.year}.${date.month.toString().padLeft(2, '0')}.${date.day.toString().padLeft(2, '0')}($w)',
                             style: GoogleFonts.getFont(
-                              'Ownglyph PDH', // Ownglyph PDH 폰트 적용
+                              'Roboto',
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
                               color: Colors.black,
                             ),
                           ),
                           const SizedBox(height: 6),
+
+                          // (2) 해시태그 목록 (없으면 빈 리스트라 아무것도 안 그려짐)
                           Wrap(
                             spacing: 8,
                             runSpacing: 4,
                             children: tags
                                 .map(
                                   (t) => Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
                                 decoration: BoxDecoration(
-                                  border: Border.all(color: Colors.brown, width: 1),
-                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(
+                                      color: Colors.brown, width: 1),
+                                  borderRadius:
+                                  BorderRadius.circular(6),
                                 ),
                                 child: Text(
                                   '#$t',
-                                  style: const TextStyle(
+                                  style: GoogleFonts.getFont(
+                                    'Roboto',
                                     fontSize: 12,
                                     color: Colors.brown,
-                                    fontFamily: 'Pretendard', // Pretendard 폰트 적용
                                   ),
                                 ),
                               ),
@@ -251,10 +321,12 @@ class _HomePageState extends State<HomePage> {
                                 .toList(),
                           ),
                           const SizedBox(height: 6),
+
+                          // (3) 내용 미리보기 (content 필드 값 혹은 빈 문자열)
                           Text(
                             content,
                             style: GoogleFonts.getFont(
-                              'Ownglyph PDH', // Ownglyph PDH 폰트 적용
+                              'Roboto',
                               fontSize: 14,
                               height: 1.4,
                               color: Colors.black,
@@ -263,6 +335,8 @@ class _HomePageState extends State<HomePage> {
                             overflow: TextOverflow.ellipsis,
                           ),
                           const SizedBox(height: 8),
+
+                          // (4) 구분선
                           const Divider(height: 1, thickness: 1),
                         ],
                       ),
@@ -271,21 +345,27 @@ class _HomePageState extends State<HomePage> {
                 },
               ),
             ),
+
+            // (5) 맨 아래 '일기쓰기' 버튼 (Google Fonts 'Roboto' 적용)
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: SizedBox(
                 height: 56,
                 child: CupertinoButton(
                   color: const Color(0xFF603913),
                   borderRadius: BorderRadius.circular(8),
-                  onPressed: () async => await Navigator.of(context).push(
-                    CupertinoPageRoute(builder: (_) => WritePage()),
-                  ),
+                  onPressed: () async {
+                    await Navigator.of(context).push(
+                      CupertinoPageRoute(builder: (_) => const WritePage()),
+                    );
+                    _loadData(); // 작성 후 돌아오면 리프레시
+                  },
                   child: Text(
                     '일기쓰기',
                     style: GoogleFonts.getFont(
-                      'Heading 5 R', // Heading 5 R 폰트 적용
+                      'Roboto',
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                       color: CupertinoColors.white,
