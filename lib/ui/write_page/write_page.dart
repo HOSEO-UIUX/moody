@@ -15,17 +15,29 @@ class _WritePageState extends State<WritePage> {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
 
+    final now = DateTime.now(); // 현재 날짜
+    final year = now.year.toString(); // "2025"
+    final month = now.month.toString().padLeft(2, '0'); // "06"
+    final day = now.day.toString().padLeft(2, '0'); // "01"
+
     try {
-      await FirebaseFirestore.instance.collection('logs').add({
-        'text': text,
-        'timestamp': Timestamp.now(),
+      await FirebaseFirestore.instance
+          .collection('date')
+          .doc('year')
+          .collection(year)
+          .doc('month')
+          .collection(month)
+          .doc(day)
+          .set({
+        'content': text,
+        'day': now.day,
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('작성 완료')),
       );
 
-      Navigator.pop(context, true); // 저장 후 이전 화면으로 이동
+      Navigator.pop(context, true);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('저장 실패: $e')),
