@@ -15,10 +15,10 @@ class _WritePageState extends State<WritePage> {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
 
-    final now = DateTime.now(); // 현재 날짜
-    final year = now.year.toString(); // "2025"
-    final month = now.month.toString().padLeft(2, '0'); // "06"
-    final day = now.day.toString().padLeft(2, '0'); // "01"
+    final now = DateTime.now();
+    final year = now.year.toString();
+    final month = now.month.toString().padLeft(2, '0');
+    final day = now.day.toString().padLeft(2, '0');
 
     try {
       await FirebaseFirestore.instance
@@ -45,6 +45,13 @@ class _WritePageState extends State<WritePage> {
     }
   }
 
+  void _clearTextField() {
+    _controller.clear();
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('작성 내용이 초기화되었습니다')),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -52,7 +59,10 @@ class _WritePageState extends State<WritePage> {
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
-        leading: const SizedBox(),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.brown),
+          onPressed: () => Navigator.pop(context),
+        ),
         title: const Text(
           '마이 로그',
           style: TextStyle(
@@ -64,6 +74,10 @@ class _WritePageState extends State<WritePage> {
           IconButton(
             icon: const Icon(Icons.show_chart, color: Colors.brown),
             onPressed: () {},
+          ),
+          IconButton(
+            icon: const Icon(Icons.delete, color: Colors.brown),
+            onPressed: _clearTextField,
           ),
         ],
       ),
