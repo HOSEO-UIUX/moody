@@ -197,10 +197,12 @@ class _HomePageState extends State<HomePage_Test> {
                 child: ElevatedButton(
                   onPressed: () async {
                     final result = await Navigator.of(context).push(
-                      CupertinoPageRoute(builder: (_) => WritePage()),
+                      CupertinoPageRoute(builder: (context) => WritePage()),
                     );
                     if (result == true) {
-                      setState(() {});
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('작성완료')),
+                      );
                     }
                   },
                   style: ElevatedButton.styleFrom(

@@ -1,12 +1,42 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
-class WritePage extends StatelessWidget {
+class WritePage extends StatefulWidget {
   const WritePage({super.key});
+
+  @override
+  State<WritePage> createState() => _WritePageState();
+}
+
+class _WritePageState extends State<WritePage> {
+  final TextEditingController _controller = TextEditingController();
+
+  Future<void> _saveLogToFirestore() async {
+    final text = _controller.text.trim();
+    if (text.isEmpty) return;
+
+    try {
+      await FirebaseFirestore.instance.collection('logs').add({
+        'text': text,
+        'timestamp': Timestamp.now(),
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('작성 완료')),
+      );
+
+      Navigator.pop(context, true); // 저장 후 이전 화면으로 이동
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('저장 실패: $e')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar( //상단 app bar 마이로그 글자 및 gpt 생성 버튼
+      appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
@@ -35,22 +65,23 @@ class WritePage extends StatelessWidget {
                   border: Border.all(color: Colors.grey.shade300),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Padding(
-                  padding: EdgeInsets.all(12.0),
+                child: Padding(
+                  padding: const EdgeInsets.all(12.0),
                   child: TextField(
+                    controller: _controller,
                     maxLines: null,
                     expands: true,
-                    decoration: InputDecoration.collapsed(hintText: ''),
+                    decoration: const InputDecoration.collapsed(hintText: ''),
                   ),
                 ),
               ),
             ),
             const SizedBox(height: 12),
-            SizedBox( //작성하기 버튼
+            SizedBox(
               width: double.infinity,
               height: 40,
               child: ElevatedButton(
-                onPressed: () {},
+                onPressed: _saveLogToFirestore,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.brown,
                   shape: RoundedRectangleBorder(

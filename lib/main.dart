@@ -2,6 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:moody/firebase_options.dart';
 import 'package:moody/ui/home_page/home_page.dart';
+import 'package:moody/ui/modify_page/test_read_page1.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,7 +18,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: HomePage(),
+      home: HomePage_Test(),
     );
   }
 }
