@@ -64,7 +64,7 @@ class _HomePageState extends State<HomePage> {
           .collection(yearStr)      // (3) 연도별 컬렉션: ex) "2025"
           .doc('month')             // (4) 월 구분 문서 ID: month
           .collection(monthStr)     // (5) 월별 컬렉션: ex) "05"
-          .orderBy('day', descending: true) // day 필드 기준 내림차순 정렬
+          .orderBy('day', descending: false) // day 필드 기준 내림차순 정렬
           .get();
 
       // 가져온 문서 리스트를 상태에 저장하고 로딩 해제
