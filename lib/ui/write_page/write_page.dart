@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:moody/ui/splash_gpt/gpt_tag.dart';
 
 class WritePage extends StatefulWidget {
   const WritePage({super.key});
@@ -82,9 +83,10 @@ class _WritePageState extends State<WritePage> {
         ],
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
         child: Column(
           children: [
+            GptTag(),
             Expanded(
               child: Container(
                 decoration: BoxDecoration(
