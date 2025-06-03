@@ -40,6 +40,10 @@ class _ModifyPageState extends State<ModifyPage> {
 
     if (doc.exists && doc.data() != null) {
       _controller.text = doc['content'] ?? '';
+      setState(() {
+        _emotions =
+            doc['emotions'] != null ? List<String>.from(doc['emotions']) : null;
+      });
     } else {
       _controller.text = '';
     }
@@ -53,6 +57,7 @@ class _ModifyPageState extends State<ModifyPage> {
     await FirebaseFirestore.instance.doc(docPath).set({
       'content': _controller.text,
       'day': int.parse(widget.dayId),
+      'emotions': _emotions,
     });
 
     ScaffoldMessenger.of(context).showSnackBar(

@@ -35,6 +35,7 @@ class _WritePageState extends State<WritePage> {
           .set({
         'content': text,
         'day': now.day,
+        'emotions': _emotions,
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
