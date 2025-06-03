@@ -1,34 +1,31 @@
 import 'package:flutter/material.dart';
 
 class GptTag extends StatelessWidget {
+  final List<String> emotions;
+
   const GptTag({
     super.key,
+    required this.emotions,
   });
 
   @override
   Widget build(BuildContext context) {
     return Row(
-      children: [
-        Container(
-          margin: EdgeInsets.only(bottom: 12),
-          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.brown),
-            borderRadius: BorderRadius.circular(4),
-          ),
-          child: Text('IMSI11'),
-        ),
-        SizedBox(width: 9),
-        Container(
-          margin: EdgeInsets.only(bottom: 12),
-          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.brown),
-            borderRadius: BorderRadius.circular(4),
-          ),
-          child: Text('IMSI22222222'),
-        ),
-      ],
+      children: emotions
+          .map((emotion) => Padding(
+                padding: const EdgeInsets.only(right: 9),
+                child: Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.brown),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(emotion),
+                ),
+              ))
+          .toList(),
     );
   }
 }

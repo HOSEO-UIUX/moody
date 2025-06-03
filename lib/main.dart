@@ -1,7 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:moody/firebase_options.dart';
-import 'package:moody/ui/home_page/home_page.dart';
 import 'package:moody/ui/splash_gpt/splash_page.dart';
 
 void main() async {
