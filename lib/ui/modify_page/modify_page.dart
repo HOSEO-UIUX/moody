@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:moody/ui/splash_gpt/gpt_tag.dart';
 import 'package:moody/ui/splash_gpt/gpt_api.dart';
+import 'package:flutter/cupertino.dart';
 
 class ModifyPage extends StatefulWidget {
   final String year;
@@ -243,21 +244,18 @@ class _ModifyPageState extends State<ModifyPage> {
                   const SizedBox(height: 12),
                   SizedBox(
                     width: double.infinity,
-                    height: 40,
-                    child: ElevatedButton(
+                    height: 56,
+                    child: CupertinoButton(
+                      color: const Color(0xFF603913),
+                      borderRadius: BorderRadius.circular(8),
                       onPressed: _updateDiary,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.brown,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                      ),
                       child: Text(
                         '수정하기',
                         style: GoogleFonts.getFont(
                           'Roboto',
-                          color: Colors.white,
+                          fontSize: 16,
                           fontWeight: FontWeight.w600,
+                          color: CupertinoColors.white,
                         ),
                       ),
                     ),

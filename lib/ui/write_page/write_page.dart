@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:moody/ui/splash_gpt/gpt_tag.dart';
 import 'package:moody/ui/splash_gpt/gpt_api.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter/cupertino.dart';
 
 class WritePage extends StatefulWidget {
   const WritePage({super.key});
@@ -172,18 +174,19 @@ class _WritePageState extends State<WritePage> {
             const SizedBox(height: 12),
             SizedBox(
               width: double.infinity,
-              height: 40,
-              child: ElevatedButton(
+              height: 56,
+              child: CupertinoButton(
+                color: const Color(0xFF603913),
+                borderRadius: BorderRadius.circular(8),
                 onPressed: _saveLogToFirestore,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.brown,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                ),
-                child: const Text(
+                child: Text(
                   '작성하기',
-                  style: TextStyle(color: Colors.white),
+                  style: GoogleFonts.getFont(
+                    'Roboto',
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: CupertinoColors.white,
+                  ),
                 ),
               ),
             ),

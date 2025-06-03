@@ -6,6 +6,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:moody/ui/write_page/write_page.dart';
 import 'package:moody/ui/modify_page/modify_page.dart';
 import 'package:google_fonts/google_fonts.dart'; // Google Fonts 패키지 import
+import 'package:moody/ui/splash_gpt/gpt_tag.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -219,176 +220,156 @@ class _HomePageState extends State<HomePage> {
                           ),
                         )
                       // 3) 문서가 있으면 ListView.builder 로 나열
-                      : ListView.builder(
-                          padding: EdgeInsets.zero,
-                          itemCount: _diaryDocs.length,
-                          itemBuilder: (_, idx) {
-                            final doc = _diaryDocs[idx];
+                      : Material(
+                          color: Colors.transparent, // 투명 배경 설정
+                          child: ListView.builder(
+                            padding: EdgeInsets.zero,
+                            itemCount: _diaryDocs.length,
+                            itemBuilder: (_, idx) {
+                              final doc = _diaryDocs[idx];
 
-                            // (A) 문서 ID("01","02",...)를 정수로 변환 → dayNumber
-                            final int dayNumber = int.parse(doc.id);
-                            // (B) 선택된 연·월 + dayNumber로 DateTime 생성
-                            final DateTime date = DateTime(
-                              _selectedMonth.year,
-                              _selectedMonth.month,
-                              dayNumber,
-                            );
-                            const wd = ['일', '월', '화', '수', '목', '금', '토'];
-                            final String w = wd[date.weekday % 7];
+                              // (A) 문서 ID("01","02",...)를 정수로 변환 → dayNumber
+                              final int dayNumber = int.parse(doc.id);
+                              // (B) 선택된 연·월 + dayNumber로 DateTime 생성
+                              final DateTime date = DateTime(
+                                _selectedMonth.year,
+                                _selectedMonth.month,
+                                dayNumber,
+                              );
+                              const wd = ['일', '월', '화', '수', '목', '금', '토'];
+                              final String w = wd[date.weekday % 7];
 
-                            // (C) doc.data()로 Map<String,dynamic> 가져오기
-                            final data = doc.data() as Map<String, dynamic>;
+                              // (C) doc.data()로 Map<String,dynamic> 가져오기
+                              final data = doc.data() as Map<String, dynamic>;
 
-                            // (D) contents 필드가 있으면 List<Map<String,dynamic>>으로, 없으면 빈 리스트
-                            final List<dynamic> rawContents =
-                                data['contents'] ?? [];
-                            final List<Map<String, dynamic>> contents =
-                                rawContents
-                                    .where((item) => item is Map)
-                                    .map((item) {
-                              final map =
-                                  Map<String, dynamic>.from(item as Map);
-                              if (map['timestamp'] is Timestamp) {
-                                map['timestamp'] =
-                                    (map['timestamp'] as Timestamp).toDate();
-                              }
-                              return map;
-                            }).toList();
+                              // (D) contents 필드가 있으면 List<Map<String,dynamic>>으로, 없으면 빈 리스트
+                              final List<dynamic> rawContents =
+                                  data['contents'] ?? [];
+                              final List<Map<String, dynamic>> contents =
+                                  rawContents
+                                      .where((item) => item is Map)
+                                      .map((item) {
+                                final map =
+                                    Map<String, dynamic>.from(item as Map);
+                                if (map['timestamp'] is Timestamp) {
+                                  map['timestamp'] =
+                                      (map['timestamp'] as Timestamp).toDate();
+                                }
+                                return map;
+                              }).toList();
 
-                            // contents를 timestamp 기준으로 내림차순 정렬
-                            contents.sort((a, b) {
-                              dynamic aTime = a['timestamp'];
-                              dynamic bTime = b['timestamp'];
-                              if (aTime is Timestamp) aTime = aTime.toDate();
-                              if (bTime is Timestamp) bTime = bTime.toDate();
-                              if (aTime == null || bTime == null) return 0;
-                              return (bTime as DateTime)
-                                  .compareTo(aTime as DateTime);
-                            });
+                              // contents를 timestamp 기준으로 내림차순 정렬
+                              contents.sort((a, b) {
+                                dynamic aTime = a['timestamp'];
+                                dynamic bTime = b['timestamp'];
+                                if (aTime is Timestamp) aTime = aTime.toDate();
+                                if (bTime is Timestamp) bTime = bTime.toDate();
+                                if (aTime == null || bTime == null) return 0;
+                                return (bTime as DateTime)
+                                    .compareTo(aTime as DateTime);
+                              });
 
-                            return Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                // 날짜 표시
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 16, vertical: 12),
-                                  child: Text(
-                                    '${date.year}.${date.month.toString().padLeft(2, '0')}.${date.day.toString().padLeft(2, '0')}($w)',
-                                    style: GoogleFonts.getFont(
-                                      'Roboto',
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.black,
-                                    ),
-                                  ),
-                                ),
-
-                                // 각 일기 내용 표시
-                                ...contents.asMap().entries.map((entry) {
-                                  final int contentIdx = entry.key;
-                                  final content = entry.value;
-                                  final String text =
-                                      content['content'] as String? ?? '';
-                                  final List<String> emotions =
-                                      content['emotions'] != null
-                                          ? List<String>.from(
-                                              content['emotions'])
-                                          : <String>[];
-
-                                  return GestureDetector(
-                                    onTap: () {
-                                      final String yearStr =
-                                          _selectedMonth.year.toString();
-                                      final String monthStr = _selectedMonth
-                                          .month
-                                          .toString()
-                                          .padLeft(2, '0');
-                                      final String dayId = doc.id;
-                                      final DateTime selectedTimestamp =
-                                          content['timestamp'] as DateTime;
-
-                                      Navigator.of(context)
-                                          .push(
-                                        CupertinoPageRoute(
-                                          builder: (_) => ModifyPage(
-                                            year: yearStr,
-                                            monthName: monthStr,
-                                            dayId: dayId,
-                                            selectedTimestamp:
-                                                selectedTimestamp,
-                                          ),
-                                        ),
-                                      )
-                                          .then((result) {
-                                        if (result == true) {
-                                          _loadData();
-                                        }
-                                      });
-                                    },
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 16, vertical: 12),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          if (emotions.isNotEmpty)
-                                            Wrap(
-                                              spacing: 8,
-                                              runSpacing: 4,
-                                              children: emotions
-                                                  .map(
-                                                    (e) => Container(
-                                                      padding: const EdgeInsets
-                                                          .symmetric(
-                                                          horizontal: 8,
-                                                          vertical: 4),
-                                                      decoration: BoxDecoration(
-                                                        border: Border.all(
-                                                            color: Colors.brown,
-                                                            width: 1),
-                                                        borderRadius:
-                                                            BorderRadius
-                                                                .circular(6),
-                                                      ),
-                                                      child: Text(
-                                                        '#$e',
-                                                        style:
-                                                            GoogleFonts.getFont(
-                                                          'Roboto',
-                                                          fontSize: 12,
-                                                          color: Colors.brown,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  )
-                                                  .toList(),
-                                            ),
-                                          if (emotions.isNotEmpty)
-                                            const SizedBox(height: 6),
-                                          Text(
-                                            text,
-                                            style: GoogleFonts.getFont(
-                                              'Roboto',
-                                              fontSize: 14,
-                                              height: 1.4,
-                                              color: Colors.black,
-                                            ),
-                                            maxLines: 2,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                          const SizedBox(height: 8),
-                                          const Divider(
-                                              height: 1, thickness: 1),
-                                        ],
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // 날짜 표시
+                                  Padding(
+                                    padding: const EdgeInsets.only(
+                                        top: 21,
+                                        left: 21,
+                                        right: 21,
+                                        bottom: 3),
+                                    child: Text(
+                                      '${date.year}.${date.month.toString().padLeft(2, '0')}.${date.day.toString().padLeft(2, '0')}($w)',
+                                      style: const TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black,
+                                        fontFamily: 'Pretendard',
                                       ),
                                     ),
-                                  );
-                                }).toList(),
-                              ],
-                            );
-                          },
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 21),
+                                    child: const Divider(
+                                      height: 1,
+                                      thickness: 1,
+                                      color: Color(0xffD9D9D9),
+                                    ),
+                                  ),
+
+                                  // 각 일기 내용 표시
+                                  ...contents.asMap().entries.map((entry) {
+                                    final int contentIdx = entry.key;
+                                    final content = entry.value;
+                                    final String text =
+                                        content['content'] as String? ?? '';
+                                    final List<String> emotions =
+                                        content['emotions'] != null
+                                            ? List<String>.from(
+                                                content['emotions'])
+                                            : <String>[];
+
+                                    return GestureDetector(
+                                      onTap: () {
+                                        final String yearStr =
+                                            _selectedMonth.year.toString();
+                                        final String monthStr = _selectedMonth
+                                            .month
+                                            .toString()
+                                            .padLeft(2, '0');
+                                        final String dayId = doc.id;
+                                        final DateTime selectedTimestamp =
+                                            content['timestamp'] as DateTime;
+
+                                        Navigator.of(context)
+                                            .push(
+                                          CupertinoPageRoute(
+                                            builder: (_) => ModifyPage(
+                                              year: yearStr,
+                                              monthName: monthStr,
+                                              dayId: dayId,
+                                              selectedTimestamp:
+                                                  selectedTimestamp,
+                                            ),
+                                          ),
+                                        )
+                                            .then((result) {
+                                          if (result == true) {
+                                            _loadData();
+                                          }
+                                        });
+                                      },
+                                      child: Padding(
+                                        padding: const EdgeInsets.only(
+                                            top: 12, left: 21, right: 21),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            if (emotions.isNotEmpty)
+                                              GptTag(emotions: emotions),
+                                            Text(
+                                              text,
+                                              style: const TextStyle(
+                                                fontFamily: 'OnGleIpParkDaHyun',
+                                                fontSize: 18,
+                                                height: 1.4,
+                                                color: Color(0xff494545),
+                                              ),
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    );
+                                  }).toList(),
+                                ],
+                              );
+                            },
+                          ),
                         ),
             ),
 
