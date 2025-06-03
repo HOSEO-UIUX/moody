@@ -234,7 +234,12 @@ class _ModifyPageState extends State<ModifyPage> {
                           controller: _controller,
                           maxLines: null,
                           expands: true,
-                          style: GoogleFonts.getFont('Roboto', fontSize: 14),
+                          style: const TextStyle(
+                            fontFamily: 'OnGleIpParkDaHyun',
+                            fontSize: 18,
+                            height: 1.4,
+                            color: Color(0xff494545),
+                          ),
                           decoration:
                               const InputDecoration.collapsed(hintText: ''),
                         ),

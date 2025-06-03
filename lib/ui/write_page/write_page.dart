@@ -166,6 +166,12 @@ class _WritePageState extends State<WritePage> {
                     controller: _controller,
                     maxLines: null,
                     expands: true,
+                    style: const TextStyle(
+                      fontFamily: 'OnGleIpParkDaHyun',
+                      fontSize: 18,
+                      height: 1.4,
+                      color: Color(0xff494545),
+                    ),
                     decoration: const InputDecoration.collapsed(hintText: ''),
                   ),
                 ),
