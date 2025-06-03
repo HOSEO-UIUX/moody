@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:moody/ui/splash_gpt/gpt_tag.dart';
+import 'package:moody/ui/splash_gpt/gpt_api.dart';
 
 class WritePage extends StatefulWidget {
   const WritePage({super.key});
@@ -10,6 +12,8 @@ class WritePage extends StatefulWidget {
 
 class _WritePageState extends State<WritePage> {
   final TextEditingController _controller = TextEditingController();
+  List<String>? _emotions;
+  bool _isAnalyzing = false;
 
   Future<void> _saveLogToFirestore() async {
     final text = _controller.text.trim();
@@ -52,6 +56,35 @@ class _WritePageState extends State<WritePage> {
     );
   }
 
+  Future<void> _analyzeEmotions() async {
+    final text = _controller.text.trim();
+    if (text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('분석할 내용을 입력해주세요')),
+      );
+      return;
+    }
+
+    setState(() {
+      _isAnalyzing = true;
+    });
+
+    try {
+      final emotions = await GptApi.analyzeEmotions(text);
+      setState(() {
+        _emotions = emotions;
+        _isAnalyzing = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isAnalyzing = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -72,8 +105,17 @@ class _WritePageState extends State<WritePage> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.show_chart, color: Colors.brown),
-            onPressed: () {},
+            icon: _isAnalyzing
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.brown),
+                    ),
+                  )
+                : const Icon(Icons.show_chart, color: Colors.brown),
+            onPressed: _isAnalyzing ? null : _analyzeEmotions,
           ),
           IconButton(
             icon: const Icon(Icons.delete, color: Colors.brown),
@@ -82,9 +124,10 @@ class _WritePageState extends State<WritePage> {
         ],
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
         child: Column(
           children: [
+            if (_emotions != null) GptTag(emotions: _emotions!),
             Expanded(
               child: Container(
                 decoration: BoxDecoration(

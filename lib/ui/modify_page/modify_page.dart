@@ -26,13 +26,13 @@ class _ModifyPageState extends State<ModifyPage> {
   @override
   void initState() {
     super.initState();
-    docPath = 'date/year/${widget.year}/month/${widget.monthName}/${widget.dayId}';
+    docPath =
+        'date/year/${widget.year}/month/${widget.monthName}/${widget.dayId}';
     _fetchDiary();
   }
 
   Future<void> _fetchDiary() async {
     final doc = await FirebaseFirestore.instance.doc(docPath).get();
-
 
     if (doc.exists && doc.data() != null) {
       _controller.text = doc['content'] ?? '';
@@ -46,15 +46,15 @@ class _ModifyPageState extends State<ModifyPage> {
   }
 
   Future<void> _updateDiary() async {
-
-
     await FirebaseFirestore.instance.doc(docPath).set({
       'content': _controller.text,
       'day': int.parse(widget.dayId),
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('수정 완료', style: GoogleFonts.getFont('Roboto')), ),
+      SnackBar(
+        content: Text('수정 완료', style: GoogleFonts.getFont('Roboto')),
+      ),
     );
     Navigator.pop(context, true);
   }
@@ -63,12 +63,14 @@ class _ModifyPageState extends State<ModifyPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title:  Text('삭제 확인', style: GoogleFonts.getFont('Roboto', fontWeight: FontWeight.bold)),
-        content:  Text('정말 이 일기를 삭제하시겠습니까?', style: GoogleFonts.getFont('Roboto')),
+        title: Text('삭제 확인',
+            style: GoogleFonts.getFont('Roboto', fontWeight: FontWeight.bold)),
+        content:
+            Text('정말 이 일기를 삭제하시겠습니까?', style: GoogleFonts.getFont('Roboto')),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child:  Text('취소', style: GoogleFonts.getFont('Roboto')),
+            child: Text('취소', style: GoogleFonts.getFont('Roboto')),
           ),
           TextButton(
             onPressed: () async {
@@ -76,10 +78,13 @@ class _ModifyPageState extends State<ModifyPage> {
               Navigator.pop(context);
               Navigator.pop(context, true);
               ScaffoldMessenger.of(context).showSnackBar(
-                 SnackBar(content: Text('삭제 완료', style: GoogleFonts.getFont('Roboto'))),
+                SnackBar(
+                    content:
+                        Text('삭제 완료', style: GoogleFonts.getFont('Roboto'))),
               );
             },
-            child:  Text('삭제', style: GoogleFonts.getFont('Roboto', color: Colors.red)),
+            child: Text('삭제',
+                style: GoogleFonts.getFont('Roboto', color: Colors.red)),
           ),
         ],
       ),
@@ -109,7 +114,8 @@ class _ModifyPageState extends State<ModifyPage> {
           ),
         ),
         actions: [
-          IconButton( //gpt, 지피티, api//
+          IconButton(
+            //gpt, 지피티, api//
             icon: const Icon(Icons.show_chart, color: Colors.brown),
             onPressed: () {},
           ),
@@ -122,55 +128,53 @@ class _ModifyPageState extends State<ModifyPage> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            Expanded(
-              child: Container(
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey.shade300),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(12.0),
-                  child: TextField(
-                    controller: _controller,
-                    maxLines: null,
-                    expands: true,
-                    style: GoogleFonts.getFont('Roboto', fontSize: 14),
-                    decoration: const InputDecoration.collapsed(hintText: ''),
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: [
+                  Expanded(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey.shade300),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(12.0),
+                        child: TextField(
+                          controller: _controller,
+                          maxLines: null,
+                          expands: true,
+                          style: GoogleFonts.getFont('Roboto', fontSize: 14),
+                          decoration:
+                              const InputDecoration.collapsed(hintText: ''),
+                        ),
+                      ),
+                    ),
                   ),
-                ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 40,
+                    child: ElevatedButton(
+                      onPressed: _updateDiary,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.brown,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                      child: Text(
+                        '수정하기',
+                        style: GoogleFonts.getFont(
+                          'Roboto',
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              height: 40,
-              child: ElevatedButton(
-                onPressed: _updateDiary,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.brown,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                ),
-                child: Text(
-                  '수정하기',
-                  style: GoogleFonts.getFont(
-                    'Roboto',
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-
-
     );
   }
-
 }
