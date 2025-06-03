@@ -184,7 +184,7 @@ class _HomePageState extends State<HomePage> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // 상단에 “YYYY. MM” 형태로 표시 (Pretendard 폰트 적용)
+              // 상단에 "YYYY. MM" 형태로 표시 (Pretendard 폰트 적용)
               Text(
                 '${_selectedMonth.year}. ${_selectedMonth.month.toString().padLeft(2, '0')}',
                 style: const TextStyle(
@@ -239,112 +239,154 @@ class _HomePageState extends State<HomePage> {
                             // (C) doc.data()로 Map<String,dynamic> 가져오기
                             final data = doc.data() as Map<String, dynamic>;
 
-                            // (D) tags 필드가 있으면 List<String>으로, 없으면 빈 리스트
-                            final List<String> tags = data.containsKey('tags')
-                                ? List<String>.from(data['tags'])
-                                : <String>[];
+                            // (D) contents 필드가 있으면 List<Map<String,dynamic>>으로, 없으면 빈 리스트
+                            final List<dynamic> rawContents =
+                                data['contents'] ?? [];
+                            final List<Map<String, dynamic>> contents =
+                                rawContents
+                                    .where((item) => item is Map)
+                                    .map((item) {
+                              final map =
+                                  Map<String, dynamic>.from(item as Map);
+                              if (map['timestamp'] is Timestamp) {
+                                map['timestamp'] =
+                                    (map['timestamp'] as Timestamp).toDate();
+                              }
+                              return map;
+                            }).toList();
 
-                            // (E) content 필드가 있으면 가져오고, 없으면 빈 문자열
-                            final String content = data.containsKey('content')
-                                ? data['content'] as String
-                                : '';
+                            // contents를 timestamp 기준으로 내림차순 정렬
+                            contents.sort((a, b) {
+                              dynamic aTime = a['timestamp'];
+                              dynamic bTime = b['timestamp'];
+                              if (aTime is Timestamp) aTime = aTime.toDate();
+                              if (bTime is Timestamp) bTime = bTime.toDate();
+                              if (aTime == null || bTime == null) return 0;
+                              return (bTime as DateTime)
+                                  .compareTo(aTime as DateTime);
+                            });
 
-                            return GestureDetector(
-                              onTap: () {
-                                // 수정 페이지로 이동할 때, 연도/월/일을 넘겨 줌
-                                final String yearStr =
-                                    _selectedMonth.year.toString();
-                                final String monthStr = _selectedMonth.month
-                                    .toString()
-                                    .padLeft(2, '0');
-                                final String dayId = doc.id;
-
-                                Navigator.of(context)
-                                    .push(
-                                  CupertinoPageRoute(
-                                    builder: (_) => ModifyPage(
-                                      year: yearStr,
-                                      monthName: monthStr,
-                                      dayId: dayId,
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // 날짜 표시
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 16, vertical: 12),
+                                  child: Text(
+                                    '${date.year}.${date.month.toString().padLeft(2, '0')}.${date.day.toString().padLeft(2, '0')}($w)',
+                                    style: GoogleFonts.getFont(
+                                      'Roboto',
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black,
                                     ),
                                   ),
-                                )
-                                    .then((result) {
-                                  if (result == true) {
-                                    // 수정 후 돌아오면 데이터 새로고침
-                                    _loadData();
-                                  }
-                                });
-                              },
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 16, vertical: 12),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    // (1) 날짜 표시 (ex: 2025.05.01(금)), Google Fonts 'Roboto' 적용
-                                    Text(
-                                      '${date.year}.${date.month.toString().padLeft(2, '0')}.${date.day.toString().padLeft(2, '0')}($w)',
-                                      style: GoogleFonts.getFont(
-                                        'Roboto',
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.black,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 6),
-
-                                    // (2) 해시태그 목록 (없으면 빈 리스트라 아무것도 안 그려짐)
-                                    Wrap(
-                                      spacing: 8,
-                                      runSpacing: 4,
-                                      children: tags
-                                          .map(
-                                            (t) => Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                      horizontal: 8,
-                                                      vertical: 4),
-                                              decoration: BoxDecoration(
-                                                border: Border.all(
-                                                    color: Colors.brown,
-                                                    width: 1),
-                                                borderRadius:
-                                                    BorderRadius.circular(6),
-                                              ),
-                                              child: Text(
-                                                '#$t',
-                                                style: GoogleFonts.getFont(
-                                                  'Roboto',
-                                                  fontSize: 12,
-                                                  color: Colors.brown,
-                                                ),
-                                              ),
-                                            ),
-                                          )
-                                          .toList(),
-                                    ),
-                                    const SizedBox(height: 6),
-
-                                    // (3) 내용 미리보기 (content 필드 값 혹은 빈 문자열)
-                                    Text(
-                                      content,
-                                      style: GoogleFonts.getFont(
-                                        'Roboto',
-                                        fontSize: 14,
-                                        height: 1.4,
-                                        color: Colors.black,
-                                      ),
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    const SizedBox(height: 8),
-
-                                    // (4) 구분선
-                                    const Divider(height: 1, thickness: 1),
-                                  ],
                                 ),
-                              ),
+
+                                // 각 일기 내용 표시
+                                ...contents.asMap().entries.map((entry) {
+                                  final int contentIdx = entry.key;
+                                  final content = entry.value;
+                                  final String text =
+                                      content['content'] as String? ?? '';
+                                  final List<String> emotions =
+                                      content['emotions'] != null
+                                          ? List<String>.from(
+                                              content['emotions'])
+                                          : <String>[];
+
+                                  return GestureDetector(
+                                    onTap: () {
+                                      final String yearStr =
+                                          _selectedMonth.year.toString();
+                                      final String monthStr = _selectedMonth
+                                          .month
+                                          .toString()
+                                          .padLeft(2, '0');
+                                      final String dayId = doc.id;
+                                      final DateTime selectedTimestamp =
+                                          content['timestamp'] as DateTime;
+
+                                      Navigator.of(context)
+                                          .push(
+                                        CupertinoPageRoute(
+                                          builder: (_) => ModifyPage(
+                                            year: yearStr,
+                                            monthName: monthStr,
+                                            dayId: dayId,
+                                            selectedTimestamp:
+                                                selectedTimestamp,
+                                          ),
+                                        ),
+                                      )
+                                          .then((result) {
+                                        if (result == true) {
+                                          _loadData();
+                                        }
+                                      });
+                                    },
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 16, vertical: 12),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          if (emotions.isNotEmpty)
+                                            Wrap(
+                                              spacing: 8,
+                                              runSpacing: 4,
+                                              children: emotions
+                                                  .map(
+                                                    (e) => Container(
+                                                      padding: const EdgeInsets
+                                                          .symmetric(
+                                                          horizontal: 8,
+                                                          vertical: 4),
+                                                      decoration: BoxDecoration(
+                                                        border: Border.all(
+                                                            color: Colors.brown,
+                                                            width: 1),
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(6),
+                                                      ),
+                                                      child: Text(
+                                                        '#$e',
+                                                        style:
+                                                            GoogleFonts.getFont(
+                                                          'Roboto',
+                                                          fontSize: 12,
+                                                          color: Colors.brown,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  )
+                                                  .toList(),
+                                            ),
+                                          if (emotions.isNotEmpty)
+                                            const SizedBox(height: 6),
+                                          Text(
+                                            text,
+                                            style: GoogleFonts.getFont(
+                                              'Roboto',
+                                              fontSize: 14,
+                                              height: 1.4,
+                                              color: Colors.black,
+                                            ),
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          const SizedBox(height: 8),
+                                          const Divider(
+                                              height: 1, thickness: 1),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
+                              ],
                             );
                           },
                         ),

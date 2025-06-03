@@ -8,12 +8,14 @@ class ModifyPage extends StatefulWidget {
   final String year;
   final String monthName;
   final String dayId;
+  final DateTime selectedTimestamp;
 
   const ModifyPage({
     super.key,
     required this.year,
     required this.monthName,
     required this.dayId,
+    required this.selectedTimestamp,
   });
 
   @override
@@ -39,11 +41,28 @@ class _ModifyPageState extends State<ModifyPage> {
     final doc = await FirebaseFirestore.instance.doc(docPath).get();
 
     if (doc.exists && doc.data() != null) {
-      _controller.text = doc['content'] ?? '';
-      setState(() {
-        _emotions =
-            doc['emotions'] != null ? List<String>.from(doc['emotions']) : null;
-      });
+      final data = doc.data() as Map<String, dynamic>;
+      final List<dynamic> rawContents = data['contents'] ?? [];
+      final List<Map<String, dynamic>> contents = rawContents.map((item) {
+        final map = Map<String, dynamic>.from(item);
+        if (map['timestamp'] is Timestamp) {
+          map['timestamp'] = (map['timestamp'] as Timestamp).toDate();
+        }
+        return map;
+      }).toList();
+      // Find the entry that matches the selected timestamp
+      final selectedEntry = contents.firstWhere(
+          (entry) => entry['timestamp'] == widget.selectedTimestamp,
+          orElse: () => <String, dynamic>{});
+
+      if (selectedEntry.isNotEmpty) {
+        _controller.text = selectedEntry['content'] ?? '';
+        setState(() {
+          _emotions = selectedEntry['emotions'] != null
+              ? List<String>.from(selectedEntry['emotions'])
+              : null;
+        });
+      }
     } else {
       _controller.text = '';
     }
@@ -54,11 +73,35 @@ class _ModifyPageState extends State<ModifyPage> {
   }
 
   Future<void> _updateDiary() async {
-    await FirebaseFirestore.instance.doc(docPath).set({
-      'content': _controller.text,
-      'day': int.parse(widget.dayId),
-      'emotions': _emotions,
-    });
+    final doc = await FirebaseFirestore.instance.doc(docPath).get();
+    if (doc.exists && doc.data() != null) {
+      final data = doc.data() as Map<String, dynamic>;
+      final List<dynamic> rawContents = data['contents'] ?? [];
+      final List<Map<String, dynamic>> contents = rawContents.map((item) {
+        final map = Map<String, dynamic>.from(item);
+        if (map['timestamp'] is Timestamp) {
+          map['timestamp'] = (map['timestamp'] as Timestamp).toDate();
+        }
+        return map;
+      }).toList();
+
+      // Find the index of the entry that matches the selected timestamp
+      final int indexToUpdate = contents.indexWhere(
+          (entry) => entry['timestamp'] == widget.selectedTimestamp);
+
+      if (indexToUpdate != -1) {
+        contents[indexToUpdate] = {
+          'content': _controller.text,
+          'emotions': _emotions,
+          'timestamp': DateTime.now(), // Update timestamp on modification
+        };
+      }
+
+      await FirebaseFirestore.instance.doc(docPath).update({
+        'contents': contents,
+        'day': int.parse(widget.dayId),
+      });
+    }
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(

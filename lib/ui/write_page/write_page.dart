@@ -25,18 +25,41 @@ class _WritePageState extends State<WritePage> {
     final day = now.day.toString().padLeft(2, '0');
 
     try {
-      await FirebaseFirestore.instance
+      final docRef = FirebaseFirestore.instance
           .collection('date')
           .doc('year')
           .collection(year)
           .doc('month')
           .collection(month)
-          .doc(day)
-          .set({
-        'content': text,
-        'day': now.day,
-        'emotions': _emotions,
-      });
+          .doc(day);
+
+      final doc = await docRef.get();
+      if (doc.exists) {
+        final data = doc.data() as Map<String, dynamic>;
+        final List<Map<String, dynamic>> contents =
+            List<Map<String, dynamic>>.from(data['contents'] ?? []);
+        contents.add({
+          'content': _controller.text,
+          'emotions': _emotions,
+          'timestamp': DateTime.now(),
+        });
+
+        await docRef.update({
+          'contents': contents,
+          'day': now.day,
+        });
+      } else {
+        await docRef.set({
+          'contents': [
+            {
+              'content': _controller.text,
+              'emotions': _emotions,
+              'timestamp': DateTime.now(),
+            }
+          ],
+          'day': now.day,
+        });
+      }
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('작성 완료')),
