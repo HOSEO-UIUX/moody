@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:moody/ui/splash_gpt/gpt_tag.dart';
 import 'package:moody/ui/splash_gpt/gpt_api.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter/cupertino.dart';
 
 class WritePage extends StatefulWidget {
   const WritePage({super.key});
@@ -25,17 +27,41 @@ class _WritePageState extends State<WritePage> {
     final day = now.day.toString().padLeft(2, '0');
 
     try {
-      await FirebaseFirestore.instance
+      final docRef = FirebaseFirestore.instance
           .collection('date')
           .doc('year')
           .collection(year)
           .doc('month')
           .collection(month)
-          .doc(day)
-          .set({
-        'content': text,
-        'day': now.day,
-      });
+          .doc(day);
+
+      final doc = await docRef.get();
+      if (doc.exists) {
+        final data = doc.data() as Map<String, dynamic>;
+        final List<Map<String, dynamic>> contents =
+            List<Map<String, dynamic>>.from(data['contents'] ?? []);
+        contents.add({
+          'content': _controller.text,
+          'emotions': _emotions,
+          'timestamp': DateTime.now(),
+        });
+
+        await docRef.update({
+          'contents': contents,
+          'day': now.day,
+        });
+      } else {
+        await docRef.set({
+          'contents': [
+            {
+              'content': _controller.text,
+              'emotions': _emotions,
+              'timestamp': DateTime.now(),
+            }
+          ],
+          'day': now.day,
+        });
+      }
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('작성 완료')),
@@ -140,6 +166,12 @@ class _WritePageState extends State<WritePage> {
                     controller: _controller,
                     maxLines: null,
                     expands: true,
+                    style: const TextStyle(
+                      fontFamily: 'OnGleIpParkDaHyun',
+                      fontSize: 18,
+                      height: 1.4,
+                      color: Color(0xff494545),
+                    ),
                     decoration: const InputDecoration.collapsed(hintText: ''),
                   ),
                 ),
@@ -148,18 +180,19 @@ class _WritePageState extends State<WritePage> {
             const SizedBox(height: 12),
             SizedBox(
               width: double.infinity,
-              height: 40,
-              child: ElevatedButton(
+              height: 56,
+              child: CupertinoButton(
+                color: const Color(0xFF603913),
+                borderRadius: BorderRadius.circular(8),
                 onPressed: _saveLogToFirestore,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.brown,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                ),
-                child: const Text(
+                child: Text(
                   '작성하기',
-                  style: TextStyle(color: Colors.white),
+                  style: GoogleFonts.getFont(
+                    'Roboto',
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: CupertinoColors.white,
+                  ),
                 ),
               ),
             ),
