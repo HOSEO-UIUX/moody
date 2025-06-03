@@ -22,7 +22,7 @@ class GptTag extends StatelessWidget {
                     border: Border.all(color: Colors.brown),
                     borderRadius: BorderRadius.circular(4),
                   ),
-                  child: Text(emotion),
+                  child: Text('#$emotion'),
                 ),
               ))
           .toList(),
