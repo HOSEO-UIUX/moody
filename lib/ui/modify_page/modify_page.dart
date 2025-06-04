@@ -156,7 +156,28 @@ class _ModifyPageState extends State<ModifyPage> {
           ),
           TextButton(
             onPressed: () async {
-              await FirebaseFirestore.instance.doc(docPath).delete();
+              final doc = await FirebaseFirestore.instance.doc(docPath).get();
+              if (doc.exists && doc.data() != null) {
+                final data = doc.data() as Map<String, dynamic>;
+                final List<dynamic> rawContents = data['contents'] ?? [];
+                final List<Map<String, dynamic>> contents =
+                    rawContents.map((item) {
+                  final map = Map<String, dynamic>.from(item);
+                  if (map['timestamp'] is Timestamp) {
+                    map['timestamp'] = (map['timestamp'] as Timestamp).toDate();
+                  }
+                  return map;
+                }).toList();
+
+                // 선택된 타임스탬프와 일치하지 않는 항목만 필터링
+                contents.removeWhere(
+                    (entry) => entry['timestamp'] == widget.selectedTimestamp);
+
+                await FirebaseFirestore.instance.doc(docPath).update({
+                  'contents': contents,
+                  'day': int.parse(widget.dayId),
+                });
+              }
               Navigator.pop(context);
               Navigator.pop(context, true);
               ScaffoldMessenger.of(context).showSnackBar(
