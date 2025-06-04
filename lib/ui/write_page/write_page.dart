@@ -17,6 +17,7 @@ class _WritePageState extends State<WritePage> {
   List<String>? _emotions;
   bool _isAnalyzing = false;
 
+  //Firebase에 일기 저장
   Future<void> _saveLogToFirestore() async {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
@@ -26,6 +27,7 @@ class _WritePageState extends State<WritePage> {
     final month = now.month.toString().padLeft(2, '0');
     final day = now.day.toString().padLeft(2, '0');
 
+    //firebase 경로설정
     try {
       final docRef = FirebaseFirestore.instance
           .collection('date')
@@ -35,6 +37,7 @@ class _WritePageState extends State<WritePage> {
           .collection(month)
           .doc(day);
 
+      //작성날짜에 일기가 이미 있는지 확인
       final doc = await docRef.get();
       if (doc.exists) {
         final data = doc.data() as Map<String, dynamic>;
@@ -50,7 +53,7 @@ class _WritePageState extends State<WritePage> {
           'contents': contents,
           'day': now.day,
         });
-      } else {
+      } else { //해당날짜 일기 처음 작성시 새로 생성
         await docRef.set({
           'contents': [
             {
@@ -67,7 +70,7 @@ class _WritePageState extends State<WritePage> {
         const SnackBar(content: Text('작성 완료')),
       );
 
-      Navigator.pop(context, true);
+      Navigator.pop(context, true); //home_page 새로고침 유도
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('저장 실패: $e')),
@@ -82,6 +85,7 @@ class _WritePageState extends State<WritePage> {
     );
   }
 
+  //gpt api 호출
   Future<void> _analyzeEmotions() async {
     final text = _controller.text.trim();
     if (text.isEmpty) {
@@ -111,6 +115,7 @@ class _WritePageState extends State<WritePage> {
     }
   }
 
+  //UI
   @override
   Widget build(BuildContext context) {
     return Scaffold(
