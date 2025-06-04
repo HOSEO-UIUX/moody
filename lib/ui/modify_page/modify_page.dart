@@ -6,10 +6,10 @@ import 'package:moody/ui/splash_gpt/gpt_api.dart';
 import 'package:flutter/cupertino.dart';
 
 class ModifyPage extends StatefulWidget {
-  final String year;
-  final String monthName;
-  final String dayId;
-  final DateTime selectedTimestamp;
+  final String year; // 선택된 연도
+  final String monthName; // 선택된 월 이름
+  final String dayId; // 선택된 날짜의 ID
+  final DateTime selectedTimestamp; // 해당 일기의 타임스탬프
 
   const ModifyPage({
     super.key,
@@ -26,36 +26,41 @@ class ModifyPage extends StatefulWidget {
 class _ModifyPageState extends State<ModifyPage> {
   final TextEditingController _controller = TextEditingController();
   bool _loading = true;
-  late final String docPath;
+  late final String docPath; // Firestore 문서 경로
   List<String>? _emotions;
   bool _isAnalyzing = false;
 
   @override
   void initState() {
     super.initState();
+    // Firestore 문서 경로 지정
     docPath =
         'date/year/${widget.year}/month/${widget.monthName}/${widget.dayId}';
-    _fetchDiary();
+    _fetchDiary(); // 일기 데이터 불러오기
   }
 
+  //해당 날짜의 일기 불러오기
   Future<void> _fetchDiary() async {
     final doc = await FirebaseFirestore.instance.doc(docPath).get();
 
     if (doc.exists && doc.data() != null) {
       final data = doc.data() as Map<String, dynamic>;
       final List<dynamic> rawContents = data['contents'] ?? [];
-      final List<Map<String, dynamic>> contents = rawContents.map((item) {
+
+      // 각 일기 항목을 Map으로 변환 및 timestamp 변환
+        final List<Map<String, dynamic>> contents = rawContents.map((item) {
         final map = Map<String, dynamic>.from(item);
         if (map['timestamp'] is Timestamp) {
           map['timestamp'] = (map['timestamp'] as Timestamp).toDate();
         }
         return map;
       }).toList();
-      // Find the entry that matches the selected timestamp
+      // 선택한 timestamp와 일치하는 항목 찾기
       final selectedEntry = contents.firstWhere(
           (entry) => entry['timestamp'] == widget.selectedTimestamp,
           orElse: () => <String, dynamic>{});
 
+      // 해당 항목이 있으면 텍스트 필드와 감정 태그 업데이트
       if (selectedEntry.isNotEmpty) {
         _controller.text = selectedEntry['content'] ?? '';
         setState(() {
@@ -73,6 +78,7 @@ class _ModifyPageState extends State<ModifyPage> {
     });
   }
 
+  // DB에 일기 내용 수정 업데이트
   Future<void> _updateDiary() async {
     final doc = await FirebaseFirestore.instance.doc(docPath).get();
     if (doc.exists && doc.data() != null) {
@@ -86,7 +92,7 @@ class _ModifyPageState extends State<ModifyPage> {
         return map;
       }).toList();
 
-      // Find the index of the entry that matches the selected timestamp
+      // 수정 대상 항목 찾기
       final int indexToUpdate = contents.indexWhere(
           (entry) => entry['timestamp'] == widget.selectedTimestamp);
 
@@ -98,12 +104,14 @@ class _ModifyPageState extends State<ModifyPage> {
         };
       }
 
+      // DB에 업데이트
       await FirebaseFirestore.instance.doc(docPath).update({
         'contents': contents,
         'day': int.parse(widget.dayId),
       });
     }
 
+    // 완료 메세지
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('수정 완료', style: GoogleFonts.getFont('Roboto')),
@@ -112,6 +120,7 @@ class _ModifyPageState extends State<ModifyPage> {
     Navigator.pop(context, true);
   }
 
+  // GPT를 통한 감정 분석 실행
   Future<void> _analyzeEmotions() async {
     final text = _controller.text.trim();
     if (text.isEmpty) {
@@ -126,7 +135,7 @@ class _ModifyPageState extends State<ModifyPage> {
     });
 
     try {
-      final emotions = await GptApi.analyzeEmotions(text);
+      final emotions = await GptApi.analyzeEmotions(text);// GPT API 호출
       setState(() {
         _emotions = emotions;
         _isAnalyzing = false;
@@ -141,6 +150,7 @@ class _ModifyPageState extends State<ModifyPage> {
     }
   }
 
+  // 삭제 알림창
   void _showDeleteDialog() {
     showDialog(
       context: context,
@@ -230,19 +240,21 @@ class _ModifyPageState extends State<ModifyPage> {
                 : const Icon(Icons.show_chart, color: Colors.brown),
             onPressed: _isAnalyzing ? null : _analyzeEmotions,
           ),
+          // 삭제 버튼
           IconButton(
             icon: const Icon(Icons.delete, color: Colors.brown),
             onPressed: _showDeleteDialog,
           ),
         ],
       ),
+      // 데이터 로딩 중이면 로딩 표시
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 children: [
-                  if (_emotions != null) GptTag(emotions: _emotions!),
+                  if (_emotions != null) GptTag(emotions: _emotions!),// 감정 태그 표시
                   Expanded(
                     child: Container(
                       decoration: BoxDecoration(
