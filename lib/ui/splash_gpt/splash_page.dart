@@ -10,6 +10,7 @@ class SplashPage extends StatefulWidget {
 }
 
 class _SplashPageState extends State<SplashPage> {
+  // 비동기처리해서 3초 후 HomePage로 이동
   @override
   void initState() {
     super.initState();
