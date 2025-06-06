@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 
+/// 감정 태그를 표시하는 위젯
+///
+/// GPT API로부터 분석된 감정들을 해시태그 형태로 표시
+/// 각 태그는 갈색 테두리와 텍스트로 구성
 class GptTag extends StatelessWidget {
+  /// 표시할 감정 태그 리스트
   final List<String> emotions;
 
   const GptTag({
